@@ -1,93 +1,125 @@
-var express = require( "express" );
-const pool = require("./database");
-const bodyParser = require ("body-parser");
+//const pool = require("./database");
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const mysql = require("mysql2/promise");
+require("dotenv").config();
 
-var app = express();
+const app = express();
 
-app.set ( "view engine", "ejs" );
-app.use(bodyParser.urlencoded ({extended: false}));
+const pool = mysql.createPool(process.env.DATABASE_URL);
+
+app.set("view engine", "ejs");
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cors());
 
 
-app.post ("/Search.ejs", async (req, res) => {
+app.post("/Search.ejs", async (req, res) => {
     try {
-        const request = pool.request();
-        const result = await request.query('SELECT * from Restaurant');
+        const connection = await pool.getConnection();
+        const [rows,fields] = await connection.query("SELECT * FROM Restaurant");
         if (req.body.search == "") {
-            res.render ("homepage", {
-                result,
+            res.render("homepage", {
+            result,
+        });
+        } else {
+            result.recordset.forEach(async function (row) {
+            if (row.RestaurantName == req.body.search) {
+                var Name = row.RestaurantName;
+                const Final_result = await request.query(
+                `SELECT Restaurant.Rank, Restaurant.RestaurantName, Category.RestaurantType, Sales.Sales, Sales.YOY_Sales, Franchise.Units, Franchise.YOY_Units FROM Restaurant JOIN Category ON Restaurant.RestaurantID = Category.RestaurantID JOIN Sales ON Restaurant.RestaurantID = Sales.RestaurantID JOIN Franchise ON Restaurant.RestaurantID = Franchise.RestaurantID WHERE Restaurant.RestaurantName = '${Name.replace(
+                    "'",
+                    "''"
+                )}'`
+            );
+            res.render("Search", {
+              Final_result,
             });
-        }
-        else{
-            result.recordset.forEach(async function(row){
-                if (row.RestaurantName == req.body.search){
-                    var Name = row.RestaurantName
-                    const Final_result = await request.query(`SELECT Restaurant.RANK, Restaurant.RestaurantName, Category.RestaurantType, Sales.Sales, Sales.YOY_Sales, Franchise.Units, Franchise.YOY_Units FROM Restaurant JOIN Category ON Restaurant.RestaurantID = Category.RestaurantID JOIN Sales ON Restaurant.RestaurantID = Sales.RestaurantID JOIN Franchise ON Restaurant.RestaurantID = Franchise.RestaurantID WHERE Restaurant.RestaurantName = '${Name.replace("'", "''")}'`);
-                    res.render ("Search", {
-                        Final_result,
-                    })
-                }
-            })
-        }
+          }
+        });
+      }
     } catch (err) {
-        console.log(err);
-        res.status(500).send('Error retrieving users from database');
+      console.log(err);
+      res.status(500).send("Error retrieving data from database");
     }
-})
+});
 
 
-app.get('/users', async (req, res) => {
+app.get('/users', async(req, res) => {
     try {
-        const request = pool.request();
-        const result = await request.query('SELECT * FROM Franchise');
-        res.send(result.recordset);
-    } catch (err) {
-        console.log(err);
-        res.status(500).send('Error retrieving users from database');
-    }
-  });
+        // Acquire a connection from the pool
+        const connection = await pool.getConnection();
+        // Execute the SQL query
+        const [rows,fields] = await connection.execute('SELECT * FROM Restaurant');
+        // Release the connection back to the pool
+        connection.release();
+        // Map the retrieved rows to a new array
+        const restaurants = rows.map(row => ({
+          Rank: row.Rank,
+          RestaurantName: row.RestaurantName
+        }));
+        // Render the template with the retrieved data
+        res.send(restaurants);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send("Internal Server Error");
+      }
+});
   
-
-
-app.get( "/", async (req, res) =>
-    {
-        try {
-            const request = pool.request();
-            const result = await request.query('SELECT Rank,RestaurantName from Restaurant ORDER by Rank');
-            res.render ("homepage", {
-                result,
-            });
-        } catch (err) {
-            console.log(err);
-            res.status(500).send('Error retrieving users from database');
-        }
+app.get("/", async (req, res) => {
+    try {
+      // Acquire a connection from the pool
+      const connection = await pool.getConnection();
+      // Execute the SQL query
+      const [rows,fields] = await connection.execute("SELECT `Rank`, `RestaurantName` FROM Restaurant ORDER BY `Rank`");
+      // Release the connection back to the pool
+      connection.release();
+      // Map the retrieved rows to a new array
+      const restaurants = rows.map(row => ({
+        Rank: row.Rank,
+        RestaurantName: row.RestaurantName
+      }));
+      // Render the template with the retrieved data
+      res.render("homepage", { result: restaurants });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Internal Server Error");
     }
-)
+});
 
 app.get ( "/Category.ejs", async (req, res) =>
     {
         try {
-            const request = pool.request();
-            const result = await request.query('SELECT Rank,RestaurantName,Category.RestaurantType FROM Restaurant,Category Where Restaurant.RestaurantID = Category.RestaurantID');
-            res.render ("Category", {
-                result,
-            });
+            const connection = await pool.getConnection();
+            const [rows,fields] = await connection.execute("SELECT `Rank`,`RestaurantName`,Category.RestaurantType FROM Restaurant,Category Where Restaurant.RestaurantID = Category.RestaurantID");
+            connection.release();
+            const restaurants = rows.map(row => ({
+              Rank: row.Rank,
+              RestaurantName: row.RestaurantName,
+              RestaurantType: row.RestaurantType,
+            }));
+            res.render ("Category", {result: restaurants,});
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(500).send('Error retrieving users from database');
         }
     }
-)
+);
 
 app.get ( "/R_Cat.ejs", async (req, res) =>
     {
         try {
-            const request = pool.request();
-            const result = await request.query('SELECT Rank,RestaurantName,Category.RestaurantType FROM Restaurant,Category Where Restaurant.RestaurantID = Category.RestaurantID');
-            res.render ("R_Cat", {
-                result,
-            });
+            const connection = await pool.getConnection();
+            const [rows,fields] = await connection.execute("SELECT `Rank`,`RestaurantName`,Category.RestaurantType FROM Restaurant,Category Where Restaurant.RestaurantID = Category.RestaurantID");
+            connection.release();
+            const restaurants = rows.map(row => ({
+              Rank: row.Rank,
+              RestaurantName: row.RestaurantName,
+              RestaurantType: row.RestaurantType
+            }));
+            res.render ("R_Cat", {result: restaurants,});
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(500).send('Error retrieving users from database');
         }
     }
@@ -96,13 +128,17 @@ app.get ( "/R_Cat.ejs", async (req, res) =>
 app.get ( "/C_Cat.ejs", async (req, res) =>
     {
         try {
-            const request = pool.request();
-            const result = await request.query('SELECT Top 50 Rank,RestaurantName,Category.RestaurantType FROM Restaurant,Category Where Restaurant.RestaurantID = Category.RestaurantID ORDER BY Category.RestaurantType');
-            res.render ("C_Cat", {
-                result,
-            });
+            const connection = await pool.getConnection();
+            const [rows,fields] = await connection.execute("SELECT `Rank`,`RestaurantName`,Category.RestaurantType FROM Restaurant,Category Where Restaurant.RestaurantID = Category.RestaurantID ORDER BY Category.RestaurantType");
+            connection.release();
+            const restaurants = rows.map(row => ({
+              Rank: row.Rank,
+              RestaurantName: row.RestaurantName,
+              RestaurantType: row.RestaurantType,
+            }));
+            res.render ("C_Cat", {result: restaurants,});
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(500).send('Error retrieving users from database');
         }
     }
@@ -111,13 +147,18 @@ app.get ( "/C_Cat.ejs", async (req, res) =>
 app.get ( "/Sales.ejs", async (req, res) =>
     {
         try {
-            const request = pool.request();
-            const result = await request.query('SELECT Rank,RestaurantName,Sales,YOY_Sales FROM Restaurant,Sales where Restaurant.RestaurantID = Sales.RestaurantID;');
-            res.render ("Sales", {
-                result,
-            });
+            const connection = await pool.getConnection();
+            const [rows,fields] = await connection.execute("SELECT `Rank`,`RestaurantName`,`Sales`,`YOY_Sales` FROM Restaurant,Sales where Restaurant.RestaurantID = Sales.RestaurantID;");
+            connection.release();
+            const restaurants = rows.map(row => ({
+              Rank: row.Rank,
+              RestaurantName: row.RestaurantName,
+              Sales: row.Sales,
+              YOY_Sales: row.YOY_Sales
+            }));
+            res.render ("Sales", {result: restaurants,});
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(500).send('Error retrieving users from database');
         }
     }
@@ -126,13 +167,18 @@ app.get ( "/Sales.ejs", async (req, res) =>
 app.get ( "/S_Sale.ejs", async (req, res) =>
     {
         try {
-            const request = pool.request();
-            const result = await request.query('SELECT Rank,RestaurantName,Sales,YOY_Sales FROM Restaurant,Sales where Restaurant.RestaurantID = Sales.RestaurantID;');
-            res.render ("S_Sale", {
-                result,
-            });
+            const connection = await pool.getConnection();
+            const [rows,fields] = await connection.execute("SELECT `Rank`,`RestaurantName`,`Sales`,`YOY_Sales` FROM Restaurant,Sales where Restaurant.RestaurantID = Sales.RestaurantID;");
+            connection.release();
+            const restaurants = rows.map(row => ({
+              Rank: row.Rank,
+              RestaurantName: row.RestaurantName,
+              Sales: row.Sales,
+              YOY_Sales: row.YOY_Sales
+            }));
+            res.render ("S_Sale", {result: restaurants,});
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(500).send('Error retrieving users from database');
         }
     }
@@ -141,13 +187,18 @@ app.get ( "/S_Sale.ejs", async (req, res) =>
 app.get ( "/Y_Sale.ejs", async (req, res) =>
     {
         try {
-            const request = pool.request();
-            const result = await request.query('SELECT Rank,RestaurantName,Sales,YOY_Sales FROM Restaurant,Sales where Restaurant.RestaurantID = Sales.RestaurantID order by Sales.YOY_Sales DESC;');
-            res.render ("Y_Sale", {
-                result,
-            });
+            const connection = await pool.getConnection();
+            const [rows,fields] = await connection.execute("SELECT `Rank`,`RestaurantName`,`Sales`,`YOY_Sales` FROM Restaurant,Sales where Restaurant.RestaurantID = Sales.RestaurantID order by Sales.YOY_Sales DESC;");
+            connection.release();
+            const restaurants = rows.map(row => ({
+              Rank: row.Rank,
+              RestaurantName: row.RestaurantName,
+              Sales: row.Sales,
+              YOY_Sales: row.YOY_Sales
+            }));
+            res.render ("Y_Sale", {result: restaurants,});
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(500).send('Error retrieving users from database');
         }
     }
@@ -156,13 +207,18 @@ app.get ( "/Y_Sale.ejs", async (req, res) =>
 app.get ( "/Franchise.ejs", async (req, res) =>
     {
         try {
-            const request = pool.request();
-            const result = await request.query('SELECT Rank,RestaurantName,Units,YOY_Units FROM Restaurant,Franchise where Restaurant.RestaurantID = Franchise.RestaurantID;');
-            res.render ("Franchise", {
-                result,
-            });
+            const connection = await pool.getConnection();
+            const [rows,fields] = await connection.execute("SELECT `Rank`,`RestaurantName`,`Units`,`YOY_Units` FROM Restaurant,Franchise where Restaurant.RestaurantID = Franchise.RestaurantID;");
+            connection.release();
+            const restaurants = rows.map(row => ({
+              Rank: row.Rank,
+              RestaurantName: row.RestaurantName,
+              Units: row.Units,
+              YOY_Units: row.YOY_Units
+            }));
+            res.render ("Franchise", {result: restaurants,});
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(500).send('Error retrieving users from database');
         }
     }
@@ -171,13 +227,18 @@ app.get ( "/Franchise.ejs", async (req, res) =>
 app.get ( "/U_Fran.ejs", async (req, res) =>
     {
         try {
-            const request = pool.request();
-            const result = await request.query('SELECT Rank,RestaurantName,Units,YOY_Units FROM Restaurant,Franchise where Restaurant.RestaurantID = Franchise.RestaurantID order by Franchise.Units DESC;');
-            res.render ("U_Fran", {
-                result,
-            });
+            const connection = await pool.getConnection();
+            const [rows,fields] = await connection.execute("SELECT `Rank`,`RestaurantName`,`Units`,`YOY_Units` FROM Restaurant,Franchise where Restaurant.RestaurantID = Franchise.RestaurantID order by Franchise.Units DESC;");
+            connection.release();
+            const restaurants = rows.map(row => ({
+                Rank: row.Rank,
+                RestaurantName: row.RestaurantName,
+                Units: row.Units,
+                YOY_Units: row.YOY_Units
+            }));
+            res.render ("U_Fran", {result: restaurants,});
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(500).send('Error retrieving users from database');
         }
     }
@@ -186,13 +247,18 @@ app.get ( "/U_Fran.ejs", async (req, res) =>
 app.get ( "/Y_Fran.ejs", async (req, res) =>
     {
         try {
-            const request = pool.request();
-            const result = await request.query('SELECT Rank,RestaurantName,Units,YOY_Units FROM Restaurant,Franchise where Restaurant.RestaurantID = Franchise.RestaurantID order by Franchise.YOY_Units DESC;');
-            res.render ("Y_Fran", {
-                result,
-            });
+            const connection = await pool.getConnection();
+            const [rows,fields] = await connection.execute("SELECT `Rank`,`RestaurantName`,`Units`,`YOY_Units` FROM Restaurant,Franchise where Restaurant.RestaurantID = Franchise.RestaurantID order by Franchise.YOY_Units DESC;");
+            connection.release();
+            const restaurants = rows.map(row => ({
+                Rank: row.Rank,
+                RestaurantName: row.RestaurantName,
+                Units: row.Units,
+                YOY_Units: row.YOY_Units
+            }));
+            res.render ("Y_Fran", {result: restaurants,});
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(500).send('Error retrieving users from database');
         }
     }
@@ -204,6 +270,6 @@ app.get ( "/Reference.ejs", function (req, res)
     }
 )
 
-app.listen (8081, "127.0.0.2",()=> {
-    console.log("URL: http://127.0.0.2:8081");
-} );
+app.listen(3000, () => {
+    console.log('Server started on port 3000');
+});

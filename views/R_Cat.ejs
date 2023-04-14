@@ -90,20 +90,20 @@
             </center>
             <table>
               <thead>
-                  <tr>
-                      <th>Rank</th>
-                      <th>Restaurant Name</th>
-                      <th>Category</th>
-                  </tr>
+                <tr>
+                  <th>Rank</th>
+                  <th>Restaurant Name</th>
+                  <th>Category</th>
+                </tr>
               </thead>
               <tbody>
-                  <% result.recordset.forEach(function(row) { %>
-                      <tr>
-                          <td><%= row.Rank %></td>
-                          <td><%= row.RestaurantName %></td>
-                          <td><%= row.RestaurantType %></td>
-                      </tr>
-                  <% }); %>
+                <% for (let i = 0; i < result.length; i++) { %>
+                  <tr>
+                    <td><%= result[i].Rank %></td>
+                    <td><%= result[i].RestaurantName %></td>
+                    <td><%= result[i].RestaurantType %></td>
+                  </tr>
+                <% } %>
               </tbody>
             </table>
 

@@ -89,22 +89,22 @@
             </center>
             <table>
               <thead>
-                  <tr>
-                      <th>Rank</th>
-                      <th>Restaurant Name</th>
-                      <th>Sales</th>
-                      <th>YOY_Sales</th>
-                  </tr>
+                <tr>
+                  <th>Rank</th>
+                  <th>Restaurant Name</th>
+                  <th>Sales</th>
+                  <th>YOY_Sales</th>
+                </tr>
               </thead>
               <tbody>
-                  <% result.recordset.forEach(function(row) { %>
-                    <tr>
-                      <td><%= row.Rank %></td>
-                      <td><%= row.RestaurantName %></td>
-                      <td><%= row.Sales %></td>
-                      <td><%= row.YOY_Sales %></td>
-                    </tr>
-                  <% }); %>
+                <% for (let i = 0; i < result.length; i++) { %>
+                  <tr>
+                    <td><%= result[i].Rank %></td>
+                    <td><%= result[i].RestaurantName %></td>
+                    <td><%= result[i].Sales%></td>
+                    <td><%= result[i].YOY_Sales%></td>
+                  </tr>
+                <% } %>
               </tbody>
             </table>
     

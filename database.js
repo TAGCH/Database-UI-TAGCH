@@ -1,4 +1,4 @@
-const mssql = require('mssql');
+const mysql = require('mysql2');
 
 const config = {
   user: 'sa',
@@ -11,13 +11,4 @@ const config = {
     }
 };
 
-const pool = new mssql.ConnectionPool(config);
 
-pool.connect((err) => {
-    if(err){
-        console.error("error: " + err)
-        return;
-    }
-    console.log("connected")
-})
-module.exports = pool

@@ -192,18 +192,18 @@
         </center>
         <table>
           <thead>
-              <tr>
-                  <th>Rank</th>
-                  <th>Restaurant Name</th>
-              </tr>
+            <tr>
+              <th>Rank</th>
+              <th>Restaurant Name</th>
+            </tr>
           </thead>
           <tbody>
-              <% result.recordset.forEach(function(row) { %>
-                  <tr>
-                      <td><%= row.Rank %></td>
-                      <td><%= row.RestaurantName %></td>
-                  </tr>
-              <% }); %>
+            <% for (let i = 0; i < result.length; i++) { %>
+              <tr>
+                <td><%= result[i].Rank %></td>
+                <td><%= result[i].RestaurantName %></td>
+              </tr>
+            <% } %>
           </tbody>
         </table>
 

@@ -86,31 +86,32 @@
         <div class="container marketing">
             <center>
                 <br>
+                
                 <table>
-                <thead>
+                  <thead>
                     <tr>
-                        <!--<th>Rank</th>-->
-                        <th>Restaurant Name</th>
-                        <th>Category</th>
-                        <th>Sales</th>
-                        <th>YOY_Sales</th>
-                        <th>Units</th>
-                        <th>YOY_Units</th>
+                      <th>Rank</th>
+                      <th>Restaurant Name</th>
+                      <th>Restaurant Type</th>
+                      <th>Sales</th>
+                      <th>YOY Sales</th>
+                      <th>Units</th>
+                      <th>YOY Units</th>
                     </tr>
-                </thead>
-                <tbody>
-                    <% Final_result.recordset.forEach(function(row) { %>
-                        <tr>
-                            <!--<td><%= row.Rank %></td>-->
-                            <td><%= row.RestaurantName %></td>
-                            <td><%= row.RestaurantType %></td>
-                            <td><%= row.Sales %></td>
-                            <td><%= row.YOY_Sales %></td>
-                            <td><%= row.Units %></td>
-                            <td><%= row.YOY_Units %></td>
-                        </tr>
-                    <% }); %>
-                </tbody>
+                  </thead>
+                  <tbody>
+                    <% for (let i = 0; i < Final_result.recordset.length; i++) { %>
+                      <tr>
+                        <td><%= Final_result.recordset[i].RANK %></td>
+                        <td><%= Final_result.recordset[i].RestaurantName %></td>
+                        <td><%= Final_result.recordset[i].RestaurantType %></td>
+                        <td><%= Final_result.recordset[i].Sales %></td>
+                        <td><%= Final_result.recordset[i].YOY_Sales %></td>
+                        <td><%= Final_result.recordset[i].Units %></td>
+                        <td><%= Final_result.recordset[i].YOY_Units %></td>
+                      </tr>
+                    <% } %>
+                  </tbody>
                 </table>
             </center>
             <br><br>
