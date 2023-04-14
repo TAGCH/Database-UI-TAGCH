@@ -80,13 +80,15 @@
             </div>
         </nav>
     </div>
-    <br><br><br><br><br><br><br><br>
+    <br><br><br><br>
+    <center>
+      <h1 style="font-weight: 700;">Result</h1>
+    </center>
 
     <main role="main">
         <div class="container marketing">
             <center>
                 <br>
-                
                 <table>
                   <thead>
                     <tr>
@@ -100,17 +102,17 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <% for (let i = 0; i < Final_result.recordset.length; i++) { %>
+                    <% result.forEach(function(row) { %>
                       <tr>
-                        <td><%= Final_result.recordset[i].RANK %></td>
-                        <td><%= Final_result.recordset[i].RestaurantName %></td>
-                        <td><%= Final_result.recordset[i].RestaurantType %></td>
-                        <td><%= Final_result.recordset[i].Sales %></td>
-                        <td><%= Final_result.recordset[i].YOY_Sales %></td>
-                        <td><%= Final_result.recordset[i].Units %></td>
-                        <td><%= Final_result.recordset[i].YOY_Units %></td>
+                        <td><%= row.Rank %></td>
+                        <td><%= row.RestaurantName %></td>
+                        <td><%= row.RestaurantType %></td>
+                        <td><%= row.Sales %></td>
+                        <td><%= row.YOY_Sales %></td>
+                        <td><%= row.Units %></td>
+                        <td><%= row.YOY_Units %></td>
                       </tr>
-                    <% } %>
+                    <% }) %>
                   </tbody>
                 </table>
             </center>

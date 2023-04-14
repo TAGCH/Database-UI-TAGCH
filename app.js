@@ -17,30 +17,44 @@ app.use(cors());
 app.post("/Search.ejs", async (req, res) => {
     try {
         const connection = await pool.getConnection();
-        const [rows,fields] = await connection.query("SELECT * FROM Restaurant");
+        const [rows,fields] = await connection.execute("SELECT * FROM Restaurant");
+        connection.release();
+        const restaurants = rows.map(row => ({
+          Rank: row.Rank,
+          RestaurantName: row.RestaurantName
+        }));
+
         if (req.body.search == "") {
-            res.render("homepage", {
-            result,
-        });
-        } else {
-            result.recordset.forEach(async function (row) {
-            if (row.RestaurantName == req.body.search) {
-                var Name = row.RestaurantName;
-                const Final_result = await request.query(
-                `SELECT Restaurant.Rank, Restaurant.RestaurantName, Category.RestaurantType, Sales.Sales, Sales.YOY_Sales, Franchise.Units, Franchise.YOY_Units FROM Restaurant JOIN Category ON Restaurant.RestaurantID = Category.RestaurantID JOIN Sales ON Restaurant.RestaurantID = Sales.RestaurantID JOIN Franchise ON Restaurant.RestaurantID = Franchise.RestaurantID WHERE Restaurant.RestaurantName = '${Name.replace(
-                    "'",
-                    "''"
-                )}'`
-            );
-            res.render("Search", {
-              Final_result,
-            });
-          }
-        });
-      }
+            res.render("homepage", {result: restaurants,});
+        } 
+        else {
+            let found = false;
+            for (let i = 0; i < restaurants.length; i++) {
+            if (restaurants[i].RestaurantName == req.body.search) {
+                found = true;
+                const connection2 = await pool.getConnection();
+                const [rows2, fields] = await connection2.execute(`SELECT Restaurant.Rank, Restaurant.RestaurantName, Category.RestaurantType, Sales.Sales, Sales.YOY_Sales, Franchise.Units, Franchise.YOY_Units FROM Restaurant JOIN Category ON Restaurant.RestaurantID = Category.RestaurantID JOIN Sales ON Restaurant.RestaurantID = Sales.RestaurantID JOIN Franchise ON Restaurant.RestaurantID = Franchise.RestaurantID WHERE Restaurant.RestaurantName = '${req.body.search.replace("'", "''")}'`);
+                connection2.release();
+                const Final_result = rows2.map(row => ({
+                    Rank: row.Rank,
+                    RestaurantName: row.RestaurantName,
+                    RestaurantType: row.RestaurantType,
+                    Sales: row.Sales,
+                    YOY_Sales: row.YOY_Sales,
+                    Units: row.Units,
+                    YOY_Units: row.YOY_Units
+                }));
+                res.render("Search", { result: Final_result });
+                break;
+            }
+            }
+            if (!found) {
+            res.render("Search", { result: [] });
+            }
+        }
     } catch (err) {
-      console.log(err);
-      res.status(500).send("Error retrieving data from database");
+        console.error(err);
+        res.status(500).send("Error retrieving data from database");
     }
 });
 
